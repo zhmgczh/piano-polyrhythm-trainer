@@ -6,6 +6,7 @@ const UI_KEY = 'ppt:ui:v1';
 const PRESETS_KEY = 'ppt:presets:v1';
 
 export const DEFAULTS = Object.freeze({
+  ver: 3,
   left: 2,
   right: 3,
   bpm: 40,
@@ -14,7 +15,8 @@ export const DEFAULTS = Object.freeze({
   strict: false,
   countIn: 1,
   limit: 'none',              // 'none' | 'c8' | 'c16' ... | 'm5' ...
-  guideVol: 0.35,
+  guideVol: 0,                // app's guide sound for the hand(s) you play (0 = only your own presses)
+  accomp: false,              // in Left/Right mode, the app plays the other hand
   key: 0,
   scale: 'major',
   lhOctave: 3,
@@ -28,7 +30,7 @@ export const DEFAULTS = Object.freeze({
   masterVol: 0.8,
   lhVol: 0.8,
   rhVol: 0.8,
-  metroVol: 0.5,
+  metroVol: 0.7,
   metro: {
     on: true,
     sound: 'mech',              // see METRO_SOUND_IDS in audio.js
@@ -92,7 +94,22 @@ function writeJSON(key, value) {
 }
 
 export function loadSettings() {
-  return sanitize(mergeKnown(DEFAULTS, readJSON(SETTINGS_KEY)));
+  const raw = readJSON(SETTINGS_KEY);
+  const s = mergeKnown(DEFAULTS, raw);
+  if (raw && (raw.ver || 1) < DEFAULTS.ver) {
+    const from = raw.ver || 1;
+    // v2: practice is silent apart from your own playing unless you opt in.
+    if (from < 2) { s.guideVol = 0; s.accomp = false; }
+    // v3: louder metronome; time-signature presets no longer use soft beats.
+    if (from < 3) {
+      if (s.metroVol === 0.5) s.metroVol = 0.7;
+      const OLD_SIGS = { ASNS: 'ANNN', ASSNS: 'ANNAN', ASSNSS: 'ANNANN', ASNSNSS: 'ANANANN', ASSNSSNSS: 'ANNANNANN', ASSNSSNSSNSS: 'ANNANNANNANN' };
+      const pat = Array.isArray(s.metro.pattern) ? s.metro.pattern.join('') : '';
+      if (OLD_SIGS[pat]) s.metro.pattern = [...OLD_SIGS[pat]];
+    }
+    s.ver = DEFAULTS.ver;
+  }
+  return sanitize(s);
 }
 
 let saveTimer = 0;

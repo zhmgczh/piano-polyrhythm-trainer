@@ -275,8 +275,7 @@ export class Transport {
     const dur = this.tl.durAtPos(pos);
     const note = noteAt(cfg, this.positions, hand, k, i, n);
     const muted = this.isGap(k);
-    let gain = hand === 'L' ? cfg.lhVol : cfg.rhVol;
-    if (playsHand(cfg.playMode, hand)) gain *= cfg.guideVol;
+    const gain = this.handGain(hand, cfg);
     if (!muted && gain > 0.001) {
       this.audio.play(t, note.midis, {
         hand, inst: cfg.instrument, gain,
@@ -296,13 +295,25 @@ export class Transport {
     });
   }
 
+  /**
+   * How loud the app plays a hand. Listening: everything. Practicing: the hands you play only
+   * at the guide volume (0 by default), the other hand only when accompaniment is on.
+   */
+  handGain(hand, cfg = this.cfg) {
+    const vol = hand === 'L' ? cfg.lhVol : cfg.rhVol;
+    if (cfg.playMode === 'listen') return vol;
+    if (playsHand(cfg.playMode, hand)) return vol * cfg.guideVol;
+    return cfg.accomp ? vol : 0;
+  }
+
   /** Resolve on the next downbeat when a session ends. */
   emitFinal(k, t) {
     const cfg = this.cfg;
     for (const hand of ['L', 'R']) {
       const spec = this.specAt(k - 1);
       const note = noteAt(cfg, this.positions, hand, k, 0, hand === 'L' ? spec.L : spec.R);
-      const gain = (hand === 'L' ? cfg.lhVol : cfg.rhVol) * (playsHand(cfg.playMode, hand) ? Math.max(cfg.guideVol, 0.5) : 1);
+      const gain = this.handGain(hand, cfg);
+      if (gain <= 0.001) continue;
       this.audio.play(t, note.midis, { hand, inst: cfg.instrument, gain, vel: 0.8, dur: 1.4 });
     }
     if (cfg.metro.on) this.audio.click(t, 'accent', cfg.metroVol, { sound: cfg.metro.sound });

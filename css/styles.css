@@ -490,6 +490,7 @@ input[type="number"].num-inline { width: 56px; font-weight: 700; font-size: 14px
 .beat-legend i.lvl-M { height: 2px; background: var(--text-3); }
 .quick-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .quick-row .chip { font-size: 12px; font-weight: 600; }
+.round-btn.accomp-tg.is-na { opacity: .45; }
 .round-btn.metro-tg.is-on { color: var(--accent-2); border-color: color-mix(in srgb, var(--accent) 50%, transparent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 :root[data-theme="light"] .round-btn.metro-tg.is-on { color: var(--accent); }
 

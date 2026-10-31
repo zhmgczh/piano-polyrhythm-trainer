@@ -48,9 +48,9 @@ const en = {
   'mode.right': 'Right',
   'mode.both': 'Both',
   'mode.listenTip': 'Listen only — the app plays both hands (0)',
-  'mode.leftTip': 'You play the left hand, the app plays the right (1)',
+  'mode.leftTip': 'You play the left hand (1)',
   'mode.bothTip': 'You play both hands together (2)',
-  'mode.rightTip': 'You play the right hand, the app plays the left (3)',
+  'mode.rightTip': 'You play the right hand (3)',
 
   'practice.countIn': 'Count-in',
   'practice.off': 'Off',
@@ -265,6 +265,14 @@ const en = {
   'lamp.you': 'You play',
   'lamp.auto': 'App plays',
   'lamp.rest': 'Muted',
+  'lamp.shown': 'Shown only',
+  'accomp.label': 'Accompaniment',
+  'accomp.hint': 'In Left or Right mode, the app plays the other hand. Off: you only hear your own playing.',
+  'accomp.toggle': 'Accompaniment: the app plays the other hand (Shift + A)',
+  'accomp.onToast': 'Accompaniment on — the app plays the other hand',
+  'accomp.offToast': 'Accompaniment off — you only hear your own playing',
+  'practice.guideHint': '0% = the app stays silent for your hand, so you only hear your own key presses.',
+  'key.accomp': 'accompaniment',
   'lamp.idle': 'Ready',
   'lamp.finger': 'finger',
   'judge.perfect': 'Perfect',
@@ -305,8 +313,8 @@ const en = {
   'lessons.step.tempo': 'Up to tempo',
   'lessons.step.silent': 'Silent cycles',
   'lessons.desc.listen': 'Hear how {l} and {r} interlock. Say the composite words out loud with the music.',
-  'lessons.desc.rh': 'The app plays the left hand. You play the right hand\'s {r} notes per cycle with one finger.',
-  'lessons.desc.lh': 'The app plays the right hand. You play the left hand\'s {l} notes per cycle with one finger.',
+  'lessons.desc.rh': 'Play the right hand\'s {r} notes per cycle with one finger while you watch the left hand. Turn on Accompaniment to hear it too.',
+  'lessons.desc.lh': 'Play the left hand\'s {l} notes per cycle with one finger while you watch the right hand. Turn on Accompaniment to hear it too.',
   'lessons.desc.both': 'Now both hands together at a slow tempo. Only beat 1 lines up — let the other notes fall between.',
   'lessons.desc.fingers': 'Hands together while each hand walks through all five fingers.',
   'lessons.desc.tempo': 'Same rhythm, faster tempo and a richer fingering pattern.',
@@ -420,7 +428,7 @@ const en = {
   'help.title': 'How to practice',
   'help.body': `
 <h3>1 · Pick who plays</h3>
-<p>The big switch above the stage chooses who plays: <strong>Listen</strong> (the app plays everything), <span class="l">Left</span>, <strong>Both</strong> or <span class="r">Right</span>. When you play one hand, the app plays the other one for you. You can switch at any time — even while the music is running — with the switch or the keys <kbd>0</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>.</p>
+<p>The big switch above the stage chooses who plays: <strong>Listen</strong> (the app plays everything), <span class="l">Left</span>, <strong>Both</strong> or <span class="r">Right</span>. While you practice, you only hear your own key presses (and the metronome). To hear the hand you are not playing, turn on <strong>Accompaniment</strong> (toolbar button or <kbd>Shift</kbd> + <kbd>A</kbd>). You can switch at any time — even while the music is running — with the switch or the keys <kbd>0</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>.</p>
 <h3>2 · Watch the two hand lights</h3>
 <p>The light on the left side belongs to the <span class="l">left hand</span>, the one on the right side to the <span class="r">right hand</span>. Every note you play makes it flash: <strong style="color:var(--perfect)">green</strong> = on time, <strong style="color:var(--good)">yellow</strong> = a little early or late (the milliseconds are shown), <strong style="color:var(--miss)">red</strong> = missed, extra or wrong key. The ring around each light shows that hand's recent accuracy.</p>
 <h3>Hear and see each hand</h3>
@@ -428,7 +436,7 @@ const en = {
 <h3>3 · A proven practice order</h3>
 <ol>
 <li><strong>Listen</strong> and say the composite words (for 2 against 3: “Nice cup of tea”; for 3 against 4: “Pass the gol-den but-ter”).</li>
-<li>Play <span class="l">left</span> alone, then <span class="r">right</span> alone, while the app plays the other hand.</li>
+<li>Play <span class="l">left</span> alone, then <span class="r">right</span> alone. Turn on Accompaniment if you want to hear the other hand.</li>
 <li>Switch to <strong>Both</strong> at a slow tempo. Only beat 1 lines up — the other notes fall in between.</li>
 <li>Add finger patterns so all five fingers of each hand get trained, then raise the tempo (try the speed trainer).</li>
 <li>Turn on <strong>Silent cycles</strong> to check that the rhythm lives in your hands, not in the speakers.</li>
@@ -449,6 +457,7 @@ const en = {
 <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Tempo ±1 (with <kbd>Shift</kbd> ±5)</td></tr>
 <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>Previous / next view</td></tr>
 <tr><td><kbd>Shift</kbd> + <kbd>M</kbd></td><td>Metronome on / off</td></tr>
+<tr><td><kbd>Shift</kbd> + <kbd>A</kbd></td><td>Accompaniment on / off</td></tr>
 <tr><td><kbd>Shift</kbd> + <kbd>E</kbd></td><td>Ear cues on / off</td></tr>
 <tr><td><kbd>Esc</kbd></td><td>Stop</td></tr>
 </table>
@@ -509,9 +518,9 @@ const zh = {
   'mode.right': '右手',
   'mode.both': '雙手',
   'mode.listenTip': '只聆聽——由程式彈奏雙手（0）',
-  'mode.leftTip': '你彈左手，程式彈右手（1）',
+  'mode.leftTip': '你彈左手（1）',
   'mode.bothTip': '你同時彈奏雙手（2）',
-  'mode.rightTip': '你彈右手，程式彈左手（3）',
+  'mode.rightTip': '你彈右手（3）',
 
   'practice.countIn': '預備拍',
   'practice.off': '關閉',
@@ -726,6 +735,14 @@ const zh = {
   'lamp.you': '你彈奏',
   'lamp.auto': '程式彈奏',
   'lamp.rest': '靜音',
+  'lamp.shown': '僅顯示',
+  'accomp.label': '伴奏',
+  'accomp.hint': '左手或右手模式時，由程式彈奏另一隻手。關閉時只會聽到你自己彈的聲音。',
+  'accomp.toggle': '伴奏：由程式彈奏另一隻手（Shift + A）',
+  'accomp.onToast': '伴奏已開啟——程式會彈奏另一隻手',
+  'accomp.offToast': '伴奏已關閉——只聽得到你自己彈的聲音',
+  'practice.guideHint': '0%＝程式不為你的手發聲，只會聽到你自己按下的音。',
+  'key.accomp': '伴奏',
   'lamp.idle': '待命',
   'lamp.finger': '指法',
   'judge.perfect': '完美',
@@ -766,8 +783,8 @@ const zh = {
   'lessons.step.tempo': '提升速度',
   'lessons.step.silent': '靜音挑戰',
   'lessons.desc.listen': '聆聽 {l} 與 {r} 如何交錯。跟著音樂把合成節奏的字唸出來。',
-  'lessons.desc.rh': '程式彈左手，你用一根手指彈右手每組 {r} 個音。',
-  'lessons.desc.lh': '程式彈右手，你用一根手指彈左手每組 {l} 個音。',
+  'lessons.desc.rh': '用一根手指彈右手每組 {r} 個音，同時看著左手的節奏。開啟「伴奏」即可同時聽到左手。',
+  'lessons.desc.lh': '用一根手指彈左手每組 {l} 個音，同時看著右手的節奏。開啟「伴奏」即可同時聽到右手。',
   'lessons.desc.both': '以慢速雙手合奏。只有第 1 拍對齊，其他音落在彼此之間。',
   'lessons.desc.fingers': '雙手合奏，每隻手輪流使用五根手指。',
   'lessons.desc.tempo': '同樣的節奏，更快的速度與更豐富的指法。',
@@ -881,7 +898,7 @@ const zh = {
   'help.title': '練習方法',
   'help.body': `
 <h3>1．選擇由誰彈奏</h3>
-<p>舞臺上方的大切換鈕決定誰來彈：<strong>聆聽</strong>（程式彈奏全部）、<span class="l">左手</span>、<strong>雙手</strong>或<span class="r">右手</span>。你只彈一隻手時，另一隻手由程式代彈。隨時都可以切換——即使音樂正在播放——用切換鈕或按 <kbd>0</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> 即可。</p>
+<p>舞臺上方的大切換鈕決定誰來彈：<strong>聆聽</strong>（程式彈奏全部）、<span class="l">左手</span>、<strong>雙手</strong>或<span class="r">右手</span>。練習時只會聽到你自己按下的音（以及節拍器）。想聽到你沒彈的那隻手，請開啟<strong>伴奏</strong>（工具列按鈕或 <kbd>Shift</kbd> + <kbd>A</kbd>）。隨時都可以切換——即使音樂正在播放——用切換鈕或按 <kbd>0</kbd> <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> 即可。</p>
 <h3>2．看左右兩盞指示燈</h3>
 <p>左側的燈代表<span class="l">左手</span>，右側的燈代表<span class="r">右手</span>。你每彈一個音，燈就會閃一下：<strong style="color:var(--perfect)">綠色</strong>＝準時，<strong style="color:var(--good)">黃色</strong>＝稍早或稍晚（會顯示毫秒數），<strong style="color:var(--miss)">紅色</strong>＝漏彈、多按或按錯鍵。燈外圈的圓環代表該手最近的準確率。</p>
 <h3>用耳朵與眼睛分辨雙手</h3>
@@ -889,7 +906,7 @@ const zh = {
 <h3>3．有效的練習順序</h3>
 <ol>
 <li>先<strong>聆聽</strong>，並唸出合成節奏的字（二對三：「喝杯熱茶」；三對四：「請遞金黃奶油」）。</li>
-<li>讓程式彈另一隻手，先單獨練<span class="l">左手</span>，再單獨練<span class="r">右手</span>。</li>
+<li>先單獨練<span class="l">左手</span>，再單獨練<span class="r">右手</span>；想聽到另一隻手時開啟伴奏。</li>
 <li>以慢速切換到<strong>雙手</strong>。只有第 1 拍對齊，其他音落在彼此之間。</li>
 <li>加入指法模式，讓每隻手的五根手指都練到，再逐步加快速度（可使用漸進加速）。</li>
 <li>開啟<strong>靜音挑戰</strong>，確認節奏是在你的手裡，而不是在喇叭裡。</li>
@@ -910,6 +927,7 @@ const zh = {
 <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>速度 ±1（按住 <kbd>Shift</kbd> 為 ±5）</td></tr>
 <tr><td><kbd>[</kbd> <kbd>]</kbd></td><td>切換畫面</td></tr>
 <tr><td><kbd>Shift</kbd> + <kbd>M</kbd></td><td>節拍器開／關</td></tr>
+<tr><td><kbd>Shift</kbd> + <kbd>A</kbd></td><td>伴奏開／關</td></tr>
 <tr><td><kbd>Shift</kbd> + <kbd>E</kbd></td><td>左右耳提示開／關</td></tr>
 <tr><td><kbd>Esc</kbd></td><td>停止</td></tr>
 </table>

@@ -486,10 +486,11 @@ export class AudioEngine {
   click(time, level = 'normal', vol = 0.5, opts = {}) {
     if (!this.ctx || vol <= 0) return;
     const t = Math.max(time, this.ctx.currentTime);
-    const lv = level === 'accent' ? 1 : level === 'soft' ? 0.3 : 0.62;
+    // Every beat must stay clearly audible; accents are louder, not the only thing you hear.
+    const lv = level === 'accent' ? 1 : level === 'soft' ? 0.55 : 0.8;
     const rate = { L: 0.84, R: 1.19, grid: 1.33 }[opts.layer] || 1;
     const buf = this.sample(METRO_SOUNDS, opts.sound || 'mech', level === 'accent');
-    this.playSample(t, buf, lv * vol * vol * 0.95, rate, this.bus.C);
+    this.playSample(t, buf, Math.min(1.2, lv * Math.pow(vol, 1.2) * 1.1), rate, this.bus.C);
   }
 
   /** Ear cue: a body-percussion tap in the left ear (left hand) or right ear (right hand). */

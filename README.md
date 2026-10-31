@@ -17,7 +17,8 @@ Throughout the app, a *cycle* is one full repetition of the pattern — for exam
 - Session length limits (in cycles or minutes)
 
 **Hands**
-- One switch for Listen / Left / Both / Right, usable while the music is playing. In Left or Right mode, the app plays the other hand for you, plus a quieter guide for your own hand
+- One switch for Listen / Left / Both / Right, usable while the music is playing
+- While you practice, you only hear your own key presses (plus the metronome). Turn on Accompaniment to have the app play the other hand in Left or Right mode, or raise the guide volume to hear your own part
 - A light on each side of the stage shows each hand's timing in real time: green = on time, yellow = a little early or late, red = missed, extra or wrong key. The offset in milliseconds appears under the light, and the ring around it shows that hand's recent accuracy. For a hand the app is playing, the light shows the note and finger instead
 - Five-finger positions in all 12 keys, major or minor, with adjustable octaves
 - 20 fingering patterns: single finger, finger sequences, broken chords, double notes and chords, a finger change every cycle, random, and custom
@@ -73,6 +74,7 @@ The app follows the browser's preferred language: any Chinese variant (zh, zh-CN
 | `↑` `↓` | Tempo ±1 (±5 with `Shift`) |
 | `[` `]` | Previous / next view |
 | `Shift` + `M` | Metronome on / off |
+| `Shift` + `A` | Accompaniment on / off |
 | `Shift` + `E` | Ear cues on / off |
 | `Shift` + `?` | Open the guide |
 | `A S D F G` | Left hand, fingers 5 4 3 2 1 |

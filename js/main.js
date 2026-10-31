@@ -234,6 +234,10 @@ function refreshControls(except) {
   const mt = $('#btn-metro');
   mt.classList.toggle('is-on', S.metro.on);
   mt.setAttribute('aria-pressed', S.metro.on);
+  const ab = $('#btn-accomp');
+  ab.classList.toggle('is-on', S.accomp);
+  ab.classList.toggle('is-na', S.playMode === 'listen' || S.playMode === 'both');
+  ab.setAttribute('aria-pressed', S.accomp);
   const ct = $('#btn-cue');
   ct.classList.toggle('is-on', S.cue.on);
   ct.setAttribute('aria-pressed', S.cue.on);
@@ -292,12 +296,13 @@ function rebuildRhythmUi() {
 }
 
 const LEVEL_CYCLE = { A: 'N', N: 'S', S: 'M', M: 'A' };
-const SIGS = { '2/4': 'AN', '3/4': 'ANN', '4/4': 'ASNS', '5/4': 'ASSNS', '6/8': 'ASSNSS', '7/8': 'ASNSNSS', '9/8': 'ASSNSSNSS', '12/8': 'ASSNSSNSSNSS' };
+// Accent on each group's first beat (5/4 = 3+2, 7/8 = 2+2+3, compound meters in threes); every other beat at normal level.
+const SIGS = { '2/4': 'AN', '3/4': 'ANN', '4/4': 'ANNN', '5/4': 'ANNAN', '6/8': 'ANNANN', '7/8': 'ANANANN', '9/8': 'ANNANNANN', '12/8': 'ANNANNANNANN' };
 const SIG_ORDER = Object.keys(SIGS);
 const TEMPO_TERMS = [[40, 'grave'], [60, 'largo'], [66, 'larghetto'], [76, 'adagio'], [108, 'andante'], [120, 'moderato'], [168, 'allegro'], [177, 'vivace'], [200, 'presto'], [Infinity, 'prestissimo']];
 const tempoTerm = (bpm) => t(`term.${TEMPO_TERMS.find(([lim]) => bpm < lim)[1]}`);
 const PRESET_FIELDS = ['left', 'right', 'bpm', 'tempoRef', 'playMode', 'key', 'scale', 'lhOctave', 'rhOctave', 'lhPattern', 'rhPattern', 'lhCustom', 'rhCustom',
-  'instrument', 'lhVol', 'rhVol', 'guideVol', 'metroVol', 'metro', 'cue', 'speed', 'gap', 'countIn', 'limit', 'strict'];
+  'instrument', 'lhVol', 'rhVol', 'guideVol', 'accomp', 'metroVol', 'metro', 'cue', 'speed', 'gap', 'countIn', 'limit', 'strict'];
 let presets = loadPresets();
 
 function renderPresets() {
@@ -447,8 +452,8 @@ function applyMetroPreset(name) {
   const p = Array.from({ length: n }, (_, i) => {
     switch (name) {
       case 'even': return 'N';
-      case 'alt': return i % 2 === 0 ? (i === 0 ? 'A' : 'N') : 'S';
-      case 'back': return i % 2 === 1 ? 'A' : 'S';
+      case 'alt': return i % 2 === 0 ? 'A' : 'N';
+      case 'back': return i % 2 === 1 ? 'A' : 'N';
       case 'last': return i === n - 1 ? 'A' : 'M';
       default: return i === 0 ? 'A' : 'N';
     }
@@ -484,7 +489,7 @@ function onSettingChange(path) {
       break;
     case 'tempoRef':
       break;
-    case 'playMode':
+    case 'playMode': case 'accomp':
       onModeChanged();
       break;
     case 'key': case 'scale': case 'lhOctave': case 'rhOctave':
@@ -587,6 +592,7 @@ function bindControls() {
     update('metro.on', !S.metro.on);
     toast(t(S.metro.on ? 'metro.onToast' : 'metro.offToast'));
   });
+  $('#btn-accomp').addEventListener('click', toggleAccomp);
   $('#btn-cue').addEventListener('click', () => {
     update('cue.on', !S.cue.on);
     toast(t(S.cue.on ? 'cue.onToast' : 'cue.offToast'));
@@ -739,6 +745,11 @@ function tapTempo() {
     const avg = (taps[taps.length - 1] - taps[0]) / (taps.length - 1);
     setTempo(60000 / avg);
   }
+}
+
+function toggleAccomp() {
+  update('accomp', !S.accomp);
+  toast(t(S.accomp ? 'accomp.onToast' : 'accomp.offToast'));
 }
 
 function setMode(m) {
@@ -1332,6 +1343,9 @@ function onShortcut(e) {
     case 'KeyM':
       if (shift) { update('metro.on', !S.metro.on); toast(t(S.metro.on ? 'metro.onToast' : 'metro.offToast')); return true; }
       return false;
+    case 'KeyA':
+      if (shift) { toggleAccomp(); return true; }
+      return false;
     case 'KeyE':
       if (shift) { update('cue.on', !S.cue.on); toast(t(S.cue.on ? 'cue.onToast' : 'cue.offToast')); return true; }
       return false;
@@ -1363,7 +1377,8 @@ function updateLamps() {
     const mine = playsHand(S.playMode, hand);
     el.classList.toggle('is-active', mine);
     el.classList.toggle('is-idle', !mine && !transport.playing);
-    $('.lamp-role', el).textContent = mine ? t('lamp.you') : transport.playing ? t('lamp.auto') : (S.playMode === 'listen' ? t('lamp.auto') : t('lamp.auto'));
+    const heard = S.playMode === 'listen' || S.accomp;
+    $('.lamp-role', el).textContent = mine ? t('lamp.you') : heard ? t('lamp.auto') : t('lamp.shown');
     if (!mine && el.dataset.state && el.dataset.state !== 'auto') {
       el.dataset.state = '';
       $('.lamp-word', el).textContent = '—';
@@ -1545,7 +1560,7 @@ function updateHud(fr) {
         if (!transport.isGap(k)) {
           const note = noteAt(S, posMap, hand, k, i, n);
           const names = note.midis.map((m) => noteName(m, usesFlats(S), S.noteNames)).join(' ');
-          flashLamp(hand, 'auto', names, `${t('lamp.finger')} ${note.fingers.join('+')}`, 0.6);
+          flashLamp(hand, 'auto', names, `${t('lamp.finger')} ${note.fingers.join('+')}`, S.playMode === 'listen' || S.accomp ? 0.6 : 0.3);
         }
       }
     }
