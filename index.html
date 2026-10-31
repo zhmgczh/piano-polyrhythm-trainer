@@ -225,6 +225,27 @@
         </div>
       </details>
 
+      <details class="card section" data-section="chant" id="sec-chant" open hidden>
+        <summary><span class="sec-dot"></span><span data-i18n="sec.chant">Spoken chants</span><svg class="chev"><use href="#i-chev"/></svg></summary>
+        <div class="section-body">
+          <p class="hint" data-i18n="chant.hint">Each syllable fills one grid step of the beat and lines up with the metronome. While a chant plays, every other sound is muted.</p>
+          <div class="chant-group">
+            <div class="chant-head" id="chant-head-23"></div>
+            <div class="chant-list" id="chant-23"></div>
+          </div>
+          <div class="chant-group">
+            <div class="chant-head" id="chant-head-34"></div>
+            <div class="chant-list" id="chant-34"></div>
+          </div>
+          <p class="hint chant-rate" id="chant-rate" hidden></p>
+          <div class="field">
+            <div class="field-row"><label for="in-chantvol" data-i18n="chant.vol">Chant volume</label><span class="value"><output data-out="chantVol"></output></span></div>
+            <input type="range" id="in-chantvol" data-bind="chantVol" data-fmt="pct" min="0" max="1" step="0.01">
+          </div>
+          <p class="hint" data-i18n="chant.tempoHint">A chant starts at its recorded speed.</p>
+        </div>
+      </details>
+
       <details class="card section" data-section="cues" open>
         <summary><span class="sec-dot"></span><span data-i18n="sec.cues">Ear cues</span><svg class="chev"><use href="#i-chev"/></svg></summary>
         <div class="section-body">
@@ -477,6 +498,7 @@
               <div class="hud-stat"><span class="hud-label" data-i18n="hud.combo">Combo</span><span class="hud-num" id="hud-combo">0</span></div>
             </div>
             <div class="badge-row" id="badges"></div>
+            <div class="chant-line" id="chant-line" hidden aria-hidden="true"></div>
             <div class="countdown" id="countdown" aria-live="polite"></div>
             <div class="stage-hint" id="stage-hint" data-i18n="hud.ready">Press Play or Space to start</div>
             <div class="lesson-banner" id="lesson-banner" hidden>

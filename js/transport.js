@@ -66,6 +66,8 @@ export class Transport {
    *   getCfg(): settings,
    *   onCycle(k, transport) -> { stop?: boolean, bpm?: number } | void,
    *   onNote(event),
+   *   chantItems(k, spec, dur) -> items | null,   // spoken chant syllables for beat k
+   *   onChant(item, time, dur),
    * }
    */
   constructor(audio, hooks) {
@@ -151,10 +153,10 @@ export class Transport {
     for (let guard = 0; guard < 400; guard++) {
       if (!this.list && !this.beginCycle(this.nextCycle)) return;
       const item = this.list[this.cursor];
+      // Items with a lead (chant syllables start before their beat) are due early.
+      if (this.tl.timeAt(this.nextCycle + (item.due ?? item.phase)) > horizon) break;
       const pos = this.nextCycle + item.phase;
-      const t = this.tl.timeAt(pos);
-      if (t > horizon) break;
-      this.emit(item, pos, t);
+      this.emit(item, pos, this.tl.timeAt(pos));
       if (++this.cursor >= this.list.length) {
         this.list = null;
         this.cursor = 0;
@@ -187,15 +189,19 @@ export class Transport {
   }
 
   buildList(k, { L, R }, cfg) {
-    // Count-in beats click like the metronome (even when it is switched off).
-    if (k < 0) return this.metroItems(k, { L, R }, cfg, true);
     const items = [];
-    for (let i = 0; i < L; i++) items.push({ kind: 'note', hand: 'L', i, n: L, phase: i / L });
-    for (let i = 0; i < R; i++) items.push({ kind: 'note', hand: 'R', i, n: R, phase: i / R });
-    items.push(...this.metroItems(k, { L, R }, cfg));
-    // Stable sort by phase; metronome first so the click never lags a note.
-    const order = { metro: 0, note: 1 };
-    return items.sort((a, b) => a.phase - b.phase || order[a.kind] - order[b.kind]);
+    if (k < 0) {
+      // Count-in beats click like the metronome (even when it is switched off).
+      items.push(...this.metroItems(k, { L, R }, cfg, true));
+    } else {
+      for (let i = 0; i < L; i++) items.push({ kind: 'note', hand: 'L', i, n: L, phase: i / L });
+      for (let i = 0; i < R; i++) items.push({ kind: 'note', hand: 'R', i, n: R, phase: i / R });
+      items.push(...this.metroItems(k, { L, R }, cfg));
+    }
+    items.push(...(this.hooks.chantItems?.(k, { L, R }, this.durFor({ L, R })) || []));
+    // Stable sort by when each item is due; metronome first so the click never lags a note.
+    const order = { chant: 0, metro: 1, note: 2 };
+    return items.sort((a, b) => (a.due ?? a.phase) - (b.due ?? b.phase) || order[a.kind] - order[b.kind]);
   }
 
   /**
@@ -235,6 +241,10 @@ export class Transport {
   emit(item, pos, t) {
     const cfg = this.cfg;
     const k = Math.floor(pos + 1e-9);
+    if (item.kind === 'chant') {
+      if (!(this.isGap(k) && !cfg.metro.gapKeep)) this.hooks.onChant?.(item, t, this.tl.durAtPos(pos));
+      return;
+    }
     if (item.kind === 'metro') {
       if (item.count) {
         this.audio.click(t, item.level, Math.max(0.5, cfg.metroVol) * item.vol, { sound: cfg.metro.sound, layer: item.layer });

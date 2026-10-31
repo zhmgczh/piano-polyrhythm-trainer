@@ -31,6 +31,7 @@ export const DEFAULTS = Object.freeze({
   lhVol: 0.8,
   rhVol: 0.8,
   metroVol: 0.7,
+  chantVol: 0.9,              // spoken chants (Traditional Chinese interface)
   metro: {
     on: true,
     sound: 'mech',              // see METRO_SOUND_IDS in audio.js
@@ -166,7 +167,7 @@ export function sanitize(s) {
   if (!['major', 'minor'].includes(s.scale)) s.scale = 'major';
   if (!['pulse', 'orbit', 'timeline', 'falling', 'score'].includes(s.view)) s.view = 'pulse';
   if (!/^(none|[cm]\d{1,3})$/.test(s.limit)) s.limit = 'none';
-  for (const k of ['guideVol', 'masterVol', 'lhVol', 'rhVol', 'metroVol', 'reverb']) {
+  for (const k of ['guideVol', 'masterVol', 'lhVol', 'rhVol', 'metroVol', 'chantVol', 'reverb']) {
     s[k] = Math.min(1, Math.max(0, Number(s[k]) || 0));
   }
   s.fallZoom = Math.min(4, Math.max(1, Number(s.fallZoom) || 2));

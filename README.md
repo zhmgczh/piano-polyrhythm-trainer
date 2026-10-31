@@ -50,6 +50,12 @@ Tempo works like any metronome: beats per minute, where every beat holds the com
 - Left-hand notes tap in the left ear and right-hand notes in the right ear
 - Adjustable sound, volume, stereo separation, and which hands get cues, with a left / right headphone test
 
+**Spoken chants** (Traditional Chinese interface only)
+- Six recorded chants, one syllable per grid step, three for 2 against 3 and three for 3 against 4: both hands combined (一起右左右呀, 一起來右左來右來左右來呀), counting the right hand (一一二二三三, 一一一二二二三三三四四四) and counting the left hand (一一一二二二, 一一一一二二二二三三三三)
+- Choosing a chant sets the rhythm and starts at the recorded speed of 120 syllables a minute (20 BPM for 2:3, 10 BPM for 3:4). Each syllable is scheduled on the metronome grid, so the chant stays on the beat when you change the tempo: slower tempos leave longer gaps, faster ones time-compress each syllable without changing its pitch
+- While a chant plays, every other sound is muted (metronome, piano, accompaniment, ear cues and your own key presses)
+- The chant is shown above the stage and lights up one syllable at a time; the strip and the chant's button light up with it
+
 **More**
 - 46 progressive lessons with star ratings
 - Session results: per-hand accuracy, average offset and steadiness, a timing histogram, and practice tips
@@ -104,6 +110,7 @@ index.html            Markup
 manifest.webmanifest  PWA manifest
 sw.js                 Offline cache (service worker)
 assets/               App icons
+assets/audio/         Spoken chant recordings (WAV, 120 syllables a minute)
 css/styles.css        Styles (light and dark themes)
 js/main.js            Controller: settings UI, playback, input, dialogs, render loop
 js/transport.js       Look-ahead scheduler and timeline (notes, metronome, ear cues)
@@ -115,6 +122,7 @@ js/store.js           Settings, progress, presets and share links (localStorage)
 js/lessons.js         Lesson curriculum
 js/i18n.js            English and Traditional Chinese strings
 js/charts.js          Results histogram and progress trend chart
+js/chant.js           Spoken chants: syllable timing, scheduling and time compression
 js/views/*.js         Pulse, orbit, grid, falling notes, score, piano with hands, timing meter
 ```
 
@@ -125,3 +133,5 @@ Requires a current version of Chrome, Edge, Firefox or Safari. MIDI input needs 
 ## License
 
 [MIT](LICENSE) © 2026 Yufei Cai (蔡于飛)
+
+The spoken chants were synthesized with [Kokoro-82M v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh) (Apache-2.0).

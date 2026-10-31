@@ -14,6 +14,7 @@ const CORE = [
   './js/input.js',
   './js/lessons.js',
   './js/charts.js',
+  './js/chant.js',
   './js/views/draw.js',
   './js/views/piano.js',
   './js/views/orbit.js',

@@ -116,7 +116,7 @@ export class TimelineView {
     for (const s of syl) {
       const x = xOf(s.phase);
       const isNow = fr.syl?.current === s && playing;
-      const col = s.who === 'L' ? pal.L : s.who === 'R' ? pal.R : pal.both;
+      const col = s.who === 'L' ? pal.L : s.who === 'R' ? pal.R : s.who === 'N' ? pal.text2 : pal.both;
       const rr = clamp(compH * 0.28, 8, 16);
       ctx.fillStyle = isNow ? col : rgba(col, 0.35);
       ctx.beginPath();

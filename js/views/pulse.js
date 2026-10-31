@@ -164,7 +164,7 @@ export class PulseView {
     // Composite syllable in the middle
     if (playing && pos >= 0 && fr.syl?.current) {
       const s = fr.syl.current;
-      const col = s.who === 'L' ? pal.L : s.who === 'R' ? pal.R : pal.both;
+      const col = s.who === 'L' ? pal.L : s.who === 'R' ? pal.R : s.who === 'N' ? pal.text2 : pal.both;
       const pop = clamp(1 - fr.syl.since / 0.25, 0, 1);
       ctx.save();
       ctx.translate(w / 2, cy - 30);

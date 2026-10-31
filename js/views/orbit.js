@@ -258,7 +258,7 @@ export class OrbitView {
       const fs = clamp(R * 0.26, 20, 54);
       const cur = fr.syl.current;
       if (cur) {
-        const col = cur.who === 'L' ? pal.L : cur.who === 'R' ? pal.R : pal.both;
+        const col = cur.who === 'L' ? pal.L : cur.who === 'R' ? pal.R : cur.who === 'N' ? pal.text2 : pal.both;
         const age = fr.syl.since;
         const s = 1 + 0.14 * clamp(1 - age / 0.2, 0, 1);
         ctx.save();

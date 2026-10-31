@@ -23,6 +23,7 @@ import { MeterView } from './views/meter.js';
 import { PulseView } from './views/pulse.js';
 import { LESSONS, LESSON_GROUPS, LESSON_KEYS, lessonById, nextLesson, starsFor } from './lessons.js';
 import { drawHistogram, drawTrend } from './charts.js';
+import { CHANTS, chantById, chantMarks, nativeBpm, ChantPlayer } from './chant.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -50,6 +51,7 @@ let activeLesson = null;
 let lessonBackup = null;
 let session = null;
 let lastResult = null;
+let chant = null;            // { c, decoded, marks } while a spoken chant plays
 
 const audio = new AudioEngine();
 const scorer = new Scorer();
@@ -57,7 +59,10 @@ const transport = new Transport(audio, {
   getCfg: () => S,
   onCycle: (k, tr) => onCycle(k, tr),
   onNote: (ev) => scorer.register(ev),
+  chantItems: (k, spec, dur) => chantItems(spec, dur),
+  onChant: (item, time, dur) => playChantSyllable(item, time, dur),
 });
+const chantPlayer = new ChantPlayer(audio);
 
 const views = {
   pulse: new PulseView($('#stage-canvas')),
@@ -140,6 +145,7 @@ mqLight.addEventListener?.('change', () => { if (S.theme === 'auto') applyTheme(
 function applyLanguage() {
   setLang(S.lang === 'auto' ? detectLang() : S.lang);
   applyI18n();
+  applyChantLang();
   buildSelects();
   buildPresets();
   rebuildRhythmUi();
@@ -281,13 +287,19 @@ function refreshTempo() {
     l: Math.round((S.left * 60) / cyc),
     r: Math.round((S.right * 60) / cyc),
   });
+  refreshChantRate();
 }
 
 function rebuildRhythmUi() {
   const L = S.left, R = S.right;
-  sylList = syllables(L, R, getLang());
   const g = lcm(L, R);
-  sylList.forEach((s, i) => { s.span = ((sylList[i + 1]?.step ?? g) - s.step); });
+  if (chant) {
+    // The strip shows the chant itself, one syllable per grid step.
+    sylList = [...chant.c.text].map((text, i) => ({ step: i, phase: i / g, span: 1, text, who: chant.marks[i] || 'N' }));
+  } else {
+    sylList = syllables(L, R, getLang());
+    sylList.forEach((s, i) => { s.span = ((sylList[i + 1]?.step ?? g) - s.step); });
+  }
   $('#mnemonic').innerHTML = sylList.map((s, i) => `<span class="syl s-${s.who}" data-i="${i}">${s.text}</span>`).join('');
   $('#ratio-info').textContent = t('rhythm.info', { grid: g, comp: composite(L, R).length });
   $('#hud-ratio').innerHTML = `${ratioHtml(L, R)} <small style="font-size:13px;color:var(--text-3);font-family:var(--font-ui);font-weight:500;margin-left:6px">${againstText(L, R)}</small>`;
@@ -470,6 +482,7 @@ function relayout() {
 function onSettingChange(path) {
   switch (path) {
     case 'left': case 'right':
+      if (chant && (S.left !== chant.c.L || S.right !== chant.c.R)) endChant(true);
       rebuildRhythmUi();
       break;
     case 'tempoRef':
@@ -618,6 +631,11 @@ function bindControls() {
   $('#metro-presets').addEventListener('click', (e) => {
     const b = e.target.closest('[data-mpreset]');
     if (b) applyMetroPreset(b.dataset.mpreset);
+  });
+
+  $('#sec-chant').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-chant]');
+    if (b) startChant(b.dataset.chant);
   });
 
   $('#hand-switch').addEventListener('click', (e) => {
@@ -780,6 +798,7 @@ async function play() {
 function stop(reason = 'user') {
   if (!transport.playing) return;
   transport.stop(reason === 'complete');
+  if (chant) endChant();
   setPlayingUi(false);
   releaseWake();
   $('#countdown').classList.remove('show');
@@ -867,6 +886,128 @@ function endSession(reason) {
   }
   saveProgress(progress);
   if (practiced || (s.lesson && reason === 'complete')) showResults(sum, info);
+}
+
+// ---------------------------------------------------------------------------
+// Spoken chants (Traditional Chinese only)
+// ---------------------------------------------------------------------------
+
+const chantHtml = (c, cls = 'cs') => {
+  const marks = chantMarks(c);
+  return [...c.text].map((ch, i) => `<span class="${cls} m-${marks[i] || 'N'}">${ch}</span>`).join('');
+};
+
+function buildChantUi() {
+  for (const [L, R] of [[2, 3], [3, 4]]) {
+    $(`#chant-head-${L}${R}`).innerHTML = `<span class="hud-ratio">${ratioHtml(L, R)}</span><span>${againstText(L, R)}</span>`;
+    $(`#chant-${L}${R}`).innerHTML = CHANTS.filter((c) => c.L === L && c.R === R).map((c) => {
+      const tag = c.count ? t(`chant.count${c.count}`, { n: c.count === 'L' ? c.L : c.R }) : t('chant.both');
+      return `<button type="button" class="chant-btn" data-chant="${c.id}" aria-pressed="false" aria-label="${t('chant.play')}${c.text}">
+        <span class="chant-ico"><svg class="ic-play"><use href="#i-play"/></svg><svg class="ic-stop"><use href="#i-stop"/></svg></span>
+        <span class="chant-text">${chantHtml(c)}</span>
+        <span class="chant-tag">${tag}</span></button>`;
+    }).join('');
+  }
+  refreshChantUi();
+}
+
+function applyChantLang() {
+  const on = getLang() === 'zh-TW';
+  $('#sec-chant').hidden = !on;
+  if (!on && chant) endChant();
+  if (on) buildChantUi();
+}
+
+function refreshChantUi() {
+  for (const b of $$('.chant-btn')) {
+    const active = chant?.c.id === b.dataset.chant;
+    b.classList.toggle('is-active', active);
+    b.setAttribute('aria-pressed', active);
+  }
+  for (const el of $$('.cs.is-now, .cs.is-done')) el.classList.remove('is-now', 'is-done');
+  document.body.classList.toggle('chant-on', !!chant);
+  const line = $('#chant-line');
+  line.hidden = !chant;
+  if (chant) {
+    line.innerHTML = chantHtml(chant.c, 'cl');
+    line.classList.toggle('is-long', chant.c.text.length > 8);
+  }
+  refreshChantRate();
+}
+
+function refreshChantRate() {
+  const el = $('#chant-rate');
+  if (!el) return;
+  const c = chant?.c;
+  el.textContent = c ? t('chant.rate', { n: Math.round(displayedBpm() * c.text.length), native: Math.round(nativeBpm(c) * c.text.length) }) : '';
+  el.hidden = !c;
+}
+
+/** Light the current syllable (karaoke style): spoken ones stay lit until the beat ends. */
+function lightChant(idx) {
+  for (const sel of ['#chant-line .cl', '.chant-btn.is-active .cs']) {
+    $$(sel).forEach((el, i) => {
+      el.classList.toggle('is-now', i === idx);
+      el.classList.toggle('is-done', idx >= 0 && i < idx);
+    });
+  }
+}
+
+async function startChant(id) {
+  const c = chantById(id);
+  if (!c) return;
+  if (chant?.c.id === id) { stop('user'); return; }       // the playing chant's button stops it
+  const ctx = await audio.resume();
+  if (!ctx) { toast(t('audio.unsupported')); return; }
+  const btn = $(`.chant-btn[data-chant="${id}"]`);
+  btn?.classList.add('is-loading');
+  let decoded;
+  try { decoded = await chantPlayer.load(c); } catch { toast(t('chant.loadError')); return; } finally { btn?.classList.remove('is-loading'); }
+  if (activeLesson) exitLesson();
+  // Switching between chants of the same rhythm keeps the tempo you chose; anything else
+  // starts at the recorded speed.
+  const keepTempo = transport.playing && chant && chant.c.L === c.L && chant.c.R === c.R;
+  chant = null;                                           // switching chants must not trip the rhythm check
+  if (S.left !== c.L || S.right !== c.R) { S.left = c.L; update('right', c.R); }
+  if (!keepTempo) setTempo(nativeBpm(c));
+  chant = { c, decoded, marks: chantMarks(c) };
+  audio.solo(true);
+  rebuildRhythmUi();
+  refreshChantUi();
+  if (!transport.playing) await play();
+}
+
+/** Stop the chant and bring every other sound back. */
+function endChant(notify = false) {
+  if (!chant) return;
+  chant = null;
+  audio.cutVoice();
+  if (transport.playing) audio.solo(false);
+  else { audio.cutTransport(); audio.solo(false); }
+  rebuildRhythmUi();
+  refreshChantUi();
+  if (notify) toast(t('chant.ended'));
+}
+
+function chantItems(spec, dur) {
+  if (!chant || spec.L !== chant.c.L || spec.R !== chant.c.R) return null;
+  const n = chant.c.text.length;
+  const sq = ChantPlayer.squeeze(dur / n);
+  return chant.c.cuts.map((_, i) => ({
+    kind: 'chant', i, n, phase: i / n,
+    due: i / n - (ChantPlayer.pre(chant.c, i, sq) + 0.02) / dur,
+  }));
+}
+
+function playChantSyllable(item, time, dur) {
+  if (!chant) return;
+  const { c, decoded } = chant;
+  const slot = dur / item.n;
+  const sq = ChantPlayer.squeeze(slot);
+  const { buf, pre } = chantPlayer.syllable(c, decoded, item.i, sq);
+  // Never run into the next syllable: fade out just before it starts.
+  const nextPre = ChantPlayer.pre(c, (item.i + 1) % item.n, sq);
+  audio.voice(time - pre, buf, S.chantVol, slot + pre - nextPre - 0.008);
 }
 
 // ---------------------------------------------------------------------------
@@ -1497,15 +1638,18 @@ function updateHud(fr) {
   const k = Math.floor(fr.pos);
   // Composite syllable
   let idx = -1;
-  if (fr.playing && fr.pos >= 0) {
+  // A chant is spoken during the count-in too, so its syllables light up from the start.
+  if (fr.playing && (fr.pos >= 0 || chant)) {
     const phase = fr.pos - k;
     for (let i = 0; i < sylList.length; i++) if (sylList[i].phase <= phase + 1e-9) idx = i;
     const s = sylList[idx];
-    fr.syl = s ? { current: s, since: (phase - s.phase) * fr.dur } : null;
+    fr.syl = s && fr.pos >= 0 ? { current: s, since: (phase - s.phase) * fr.dur } : null;
   } else fr.syl = null;
-  if (idx !== lastSylIdx) {
+  const beatKey = chant ? `${k}:${idx}` : idx;
+  if (beatKey !== lastSylIdx) {
     $$('#mnemonic .syl').forEach((el, i) => el.classList.toggle('is-now', i === idx));
-    lastSylIdx = idx;
+    if (chant) lightChant(idx);
+    lastSylIdx = beatKey;
   }
 
   // Count-in
@@ -1747,6 +1891,7 @@ function boot() {
   buildPresets();
   bindControls();
   bindPointerInputs();
+  applyChantLang();
   rebuildRhythmUi();
   refreshControls();
   updateLamps();

@@ -127,6 +127,17 @@ const en = {
   'rhythm.rightCount': 'Right-hand notes per beat',
   'rhythm.customHint': 'Type any number from 1 to 12 for each hand.',
   'view.pulse': 'Pulse',
+  'sec.chant': 'Spoken chants',
+  'chant.hint': 'Each syllable fills one grid step of the beat and lines up with the metronome. While a chant plays, every other sound is muted.',
+  'chant.tempoHint': 'A chant starts at its recorded speed of 120 syllables a minute (2:3 = 20 BPM, 3:4 = 10 BPM). Change the tempo any time: the chant stays on the beat.',
+  'chant.rate': 'Now {n} syllables a minute (recorded at {native})',
+  'chant.both': 'Both hands',
+  'chant.countL': 'Count the left hand ({n})',
+  'chant.countR': 'Count the right hand ({n})',
+  'chant.play': 'Play chant: ',
+  'chant.vol': 'Chant volume',
+  'chant.ended': 'The rhythm changed, so the chant stopped',
+  'chant.loadError': 'Could not load the chant recording',
   'sec.cues': 'Ear cues',
   'cue.enable': 'Left ear taps with the left hand, right ear with the right hand',
   'cue.hint': 'Off by default · toolbar button or Shift + E · best with headphones.',
@@ -606,6 +617,17 @@ const zh = {
   'rhythm.rightCount': '右手每拍音數',
   'rhythm.customHint': '每隻手可輸入 1 到 12 的任意數字。',
   'view.pulse': '脈動',
+  'sec.chant': '口訣',
+  'chant.hint': '每個字佔一格，對齊節拍器的每一拍，唸到哪個字就亮哪個字。播放口訣時，其他聲音全部靜音。',
+  'chant.tempoHint': '開始時設為原速：每分鐘 120 字（2:3 為 20 BPM，3:4 為 10 BPM）。播放中可隨時調整速度，口訣會跟著節拍器對齊。',
+  'chant.rate': '目前每分鐘 {n} 字（原速 {native} 字）',
+  'chant.both': '左右合併',
+  'chant.countL': '數左手 {n} 下',
+  'chant.countR': '數右手 {n} 下',
+  'chant.play': '播放口訣：',
+  'chant.vol': '口訣音量',
+  'chant.ended': '節奏已改變，口訣已停止',
+  'chant.loadError': '口訣音檔載入失敗',
   'sec.cues': '左右耳提示',
   'cue.enable': '左手音在左耳拍打、右手音在右耳拍打',
   'cue.hint': '預設關閉．工具列按鈕或 Shift + E．建議戴耳機。',
@@ -921,6 +943,8 @@ const zh = {
 <p>左側的燈代表<span class="l">左手</span>，右側的燈代表<span class="r">右手</span>。你每彈一個音，燈就會閃一下：<strong style="color:var(--perfect)">綠色</strong>＝準時，<strong style="color:var(--good)">黃色</strong>＝稍早或稍晚（會顯示毫秒數），<strong style="color:var(--miss)">紅色</strong>＝漏彈、多按或按錯鍵。燈外圈的圓環代表該手最近的準確率。</p>
 <h3>用耳朵與眼睛分辨雙手</h3>
 <p>開啟<strong>左右耳提示</strong>（工具列按鈕或 <kbd>Shift</kbd> + <kbd>E</kbd>；預設關閉）後，左手的每個音會在左耳拍打、右手的每個音在右耳拍打（請戴耳機）。<strong>脈動</strong>畫面為每隻手各顯示一個大圓燈：每個音都會亮起，外圈會在下一個音到來的瞬間收縮到燈上；舞臺的左右邊緣也會跟著發光。</p>
+<h3>跟著口訣唸</h3>
+<p>側欄的<strong>口訣</strong>有六段錄音：二對三與三對四各有「左右合併」、「數右手」、「數左手」三種。按下其中一段，就會自動設定節奏，並以原速（每分鐘 120 字）開始播放。每個字佔一格、對齊節拍器的每一拍，唸到哪個字，舞臺上方就亮哪個字。播放口訣時，節拍器、琴聲與其他提示音全部靜音；調整速度時，口訣會跟著節拍器對齊。再按一次同一段口訣，或按 <kbd>Space</kbd>，即可停止。</p>
 <h3>3．有效的練習順序</h3>
 <ol>
 <li>先<strong>聆聽</strong>，並唸出合成節奏的字（二對三：「喝杯熱茶」；三對四：「請遞金黃奶油」）。</li>

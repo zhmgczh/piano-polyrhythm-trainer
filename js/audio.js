@@ -137,7 +137,12 @@ export class AudioEngine {
     this.comp.ratio.value = 4;
     this.comp.attack.value = 0.003;
     this.comp.release.value = 0.2;
-    this.out.connect(this.comp).connect(ctx.destination);
+    // `duck` silences everything except the spoken chant while a chant plays.
+    this.duck = ctx.createGain();
+    this.out.connect(this.duck).connect(this.comp).connect(ctx.destination);
+    this.voiceOut = ctx.createGain();
+    this.voiceOut.connect(ctx.destination);
+    this.voices = new Set();
 
     this.reverb = ctx.createConvolver();
     this.reverb.buffer = this.makeImpulse(2.6, 2.8);
@@ -247,6 +252,7 @@ export class AudioEngine {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     this.out.gain.setTargetAtTime(Math.pow(this.opts.master, 1.6) * 0.9, t, 0.02);
+    this.voiceOut.gain.setTargetAtTime(Math.pow(this.opts.master, 1.6), t, 0.02);
     this.configureBus(this.bus);
     this.configureBus(this.inputBus);
   }
@@ -261,6 +267,41 @@ export class AudioEngine {
     old.out.gain.linearRampToValueAtTime(0, t + 0.06);
     setTimeout(() => { try { old.out.disconnect(); old.send.disconnect(); } catch { /* ignore */ } }, 400);
     this.bus = this.makeBus();
+  }
+
+  /** Mute (or restore) every sound except the spoken chant. */
+  solo(on) {
+    if (!this.ctx) return;
+    this.duck.gain.setTargetAtTime(on ? 0 : 1, this.ctx.currentTime, 0.015);
+  }
+
+  /** Play one chant syllable; it fades out early if it would run past `maxDur` seconds. */
+  voice(time, buf, vol, maxDur = Infinity) {
+    const ctx = this.ctx;
+    if (!ctx || vol <= 0) return;
+    let t = time, offset = 0;
+    if (t < ctx.currentTime) { offset = ctx.currentTime - t; t = ctx.currentTime; }
+    const len = Math.min(buf.duration - offset, maxDur - offset);
+    if (len <= 0.02) return;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const g = ctx.createGain();
+    g.gain.value = vol;
+    if (len < buf.duration - offset) {
+      g.gain.setValueAtTime(vol, t + len - 0.015);
+      g.gain.linearRampToValueAtTime(0, t + len);
+    }
+    src.connect(g).connect(this.voiceOut);
+    src.start(t, offset);
+    src.stop(t + len + 0.005);
+    this.voices.add(src);
+    src.onended = () => { this.voices.delete(src); g.disconnect(); };
+  }
+
+  /** Stop every chant syllable that is playing or scheduled. */
+  cutVoice() {
+    for (const src of this.voices) { try { src.stop(); } catch { /* already stopped */ } }
+    this.voices.clear();
   }
 
   dest(hand, input) {
