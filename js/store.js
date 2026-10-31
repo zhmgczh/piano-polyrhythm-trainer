@@ -6,14 +6,14 @@ const UI_KEY = 'ppt:ui:v1';
 const PRESETS_KEY = 'ppt:presets:v1';
 
 export const DEFAULTS = Object.freeze({
-  ver: 3,
+  ver: 4,
   left: 2,
   right: 3,
-  bpm: 40,
-  tempoRef: 'cycle',          // 'cycle' | 'L' | 'R'
+  bpm: 40,                    // beats per minute; one beat holds one complete L:R group
+  tempoRef: 'cycle',          // fixed: the beat is always the whole group
   playMode: 'listen',         // 'listen' | 'left' | 'right' | 'both'
   strict: false,
-  countIn: 1,
+  countIn: 2,                 // count-in beats
   limit: 'none',              // 'none' | 'c8' | 'c16' ... | 'm5' ...
   guideVol: 0,                // app's guide sound for the hand(s) you play (0 = only your own presses)
   accomp: false,              // in Left/Right mode, the app plays the other hand
@@ -35,21 +35,15 @@ export const DEFAULTS = Object.freeze({
     on: true,
     sound: 'mech',              // see METRO_SOUND_IDS in audio.js
     gapKeep: true,              // keep clicking during silent cycles
-    layers: {
-      down: { on: true, vol: 1 },     // beat 1 of every cycle
-      L: { on: false, vol: 0.7 },     // left-hand pulse
-      R: { on: false, vol: 0.7 },     // right-hand pulse
-      grid: { on: false, vol: 0.45 }, // every common subdivision
-      custom: { on: false, vol: 0.85 },
-    },
-    mode: 'coarse',             // 'coarse' = main beats only, 'sub' = add subdivisions
-    sub: 2,                     // subdivided mode: clicks per main beat (2–9)
-    subVol: 0.6,                // subdivision click volume (relative)
-    swing: 0,                   // 0–100 % swing for even subdivisions
-    randomMute: 0,              // % of clicks dropped at random (never beat 1)
-    vibrate: false,             // vibrate on beat 1 (phones)
-    beats: 4,                   // custom layer: beats per bar
-    span: 1,                    // custom layer: bar length in cycles
+    // The metronome follows the piece: one click per beat, and every beat holds one
+    // complete L:R group. Subdivisions split that single beat.
+    mode: 'sub',                // 'coarse' = beats only, 'sub' = also subdivide each beat
+    subdiv: 'both',             // 'both' = ÷L and ÷R, 'L' = ÷L, 'R' = ÷R, 'grid' = ÷lcm, 'n' = ÷sub
+    sub: 4,                     // divisor for subdiv 'n' (2–9)
+    subVol: 0.8,                // subdivision click volume (relative)
+    randomMute: 0,              // % of clicks dropped at random (never the beat click)
+    vibrate: false,             // vibrate on beat 1 of each bar (phones)
+    beats: 4,                   // beats per bar (time signature)
     pattern: ['A', 'N', 'N', 'N'],  // per-beat level: A accent, N normal, S soft, M mute
   },
   reverb: 0.22,
@@ -107,9 +101,31 @@ export function loadSettings() {
       const pat = Array.isArray(s.metro.pattern) ? s.metro.pattern.join('') : '';
       if (OLD_SIGS[pat]) s.metro.pattern = [...OLD_SIGS[pat]];
     }
+    // v4: the metronome beat is the piece's beat; each beat holds one whole group.
+    if (from < 4) {
+      const old = raw.metro || {};
+      const lay = old.layers || {};
+      s.countIn = Math.max(2, s.countIn);
+      if (lay.L?.on && lay.R?.on) s.metro.subdiv = 'both';
+      else if (lay.L?.on) s.metro.subdiv = 'L';
+      else if (lay.R?.on) s.metro.subdiv = 'R';
+      else if (lay.grid?.on) s.metro.subdiv = 'grid';
+      s.metro.mode = 'sub';
+      s.metro.subVol = Math.max(0.8, Number(old.subVol) || 0);
+    }
     s.ver = DEFAULTS.ver;
   }
+  normalizeTempo(s);
   return sanitize(s);
+}
+
+/** Older settings could count tempo in left- or right-hand notes; convert to beats (= groups). */
+function normalizeTempo(s) {
+  if (s.tempoRef === 'L' || s.tempoRef === 'R') {
+    const n = s.tempoRef === 'L' ? s.left : s.right;
+    s.bpm = Math.round(Number(s.bpm) / Math.max(1, Number(n) || 1));
+  }
+  s.tempoRef = 'cycle';
 }
 
 let saveTimer = 0;
@@ -135,7 +151,7 @@ export function sanitize(s) {
   s.key = clampInt(s.key, 0, 11, 0);
   s.lhOctave = clampInt(s.lhOctave, 1, 5, 3);
   s.rhOctave = clampInt(s.rhOctave, 2, 6, 4);
-  s.countIn = clampInt(s.countIn, 0, 4, 1);
+  s.countIn = clampInt(s.countIn, 0, 8, 2);
   s.latency = clampInt(s.latency, -100, 300, 0);
   s.midiSplit = clampInt(s.midiSplit, 0, 108, 0);
   s.speed.start = clampInt(s.speed.start, 5, 300, 30);
@@ -145,7 +161,7 @@ export function sanitize(s) {
   s.speed.threshold = clampInt(s.speed.threshold, 0, 100, 85);
   s.gap.play = clampInt(s.gap.play, 1, 16, 3);
   s.gap.mute = clampInt(s.gap.mute, 1, 16, 1);
-  if (!['cycle', 'L', 'R'].includes(s.tempoRef)) s.tempoRef = 'cycle';
+  s.tempoRef = 'cycle';
   if (!['listen', 'left', 'right', 'both'].includes(s.playMode)) s.playMode = 'listen';
   if (!['major', 'minor'].includes(s.scale)) s.scale = 'major';
   if (!['pulse', 'orbit', 'timeline', 'falling', 'score'].includes(s.view)) s.view = 'pulse';
@@ -156,12 +172,11 @@ export function sanitize(s) {
   s.fallZoom = Math.min(4, Math.max(1, Number(s.fallZoom) || 2));
   const m = s.metro;
   m.beats = clampInt(m.beats, 1, 16, 4);
-  m.sub = clampInt(m.sub, 2, 9, 2);
-  m.swing = clampInt(m.swing, 0, 100, 0);
+  m.sub = clampInt(m.sub, 2, 9, 4);
   m.randomMute = clampInt(m.randomMute, 0, 80, 0);
   m.subVol = Math.min(1, Math.max(0, Number(m.subVol) || 0));
-  if (!['coarse', 'sub'].includes(m.mode)) m.mode = 'coarse';
-  m.span = clampInt(m.span, 1, 4, 1);
+  if (!['coarse', 'sub'].includes(m.mode)) m.mode = 'sub';
+  if (!['both', 'L', 'R', 'grid', 'n'].includes(m.subdiv)) m.subdiv = 'both';
   if (!['mech', 'quartz', 'wood', 'claves', 'cowbell', 'stick', 'beep', 'click'].includes(m.sound)) m.sound = 'mech';
   const c = s.cue;
   if (!['tap', 'knock', 'clap', 'snap'].includes(c.sound)) c.sound = 'tap';
@@ -171,7 +186,6 @@ export function sanitize(s) {
   const pat = Array.isArray(m.pattern) ? m.pattern.filter((x) => ['A', 'N', 'S', 'M'].includes(x)) : [];
   while (pat.length < m.beats) pat.push(pat.length ? 'N' : 'A');
   m.pattern = pat.slice(0, m.beats);
-  for (const layer of Object.values(m.layers)) layer.vol = Math.min(1, Math.max(0, Number(layer.vol) || 0));
   return s;
 }
 
@@ -231,6 +245,7 @@ export function buildShareUrl(s) {
   for (const [short, key] of HASH_FIELDS) {
     if (key === 'lhCustom' && s.lhPattern !== 'custom') continue;
     if (key === 'rhCustom' && s.rhPattern !== 'custom') continue;
+    if (key === 'tempoRef') continue;
     q.set(short, String(s[key]));
   }
   const url = new URL(location.href);
@@ -250,6 +265,7 @@ export function applyHash(s) {
     s[key] = type === 'int' ? Number(v) : v;
     applied = true;
   }
+  normalizeTempo(s);
   sanitize(s);
   return applied;
 }

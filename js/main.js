@@ -165,7 +165,7 @@ function buildSelects() {
     }).join('');
   }
 
-  $('#in-countin').innerHTML = [0, 1, 2, 3, 4].map((n) => `<option value="${n}">${n ? t('practice.cycles', { n }) : t('practice.off')}</option>`).join('');
+  $('#in-countin').innerHTML = [0, 1, 2, 3, 4, 6, 8].map((n) => `<option value="${n}">${n ? t('practice.cycles', { n }) : t('practice.off')}</option>`).join('');
 
   const limits = ['none', 'c8', 'c16', 'c32', 'c64', 'm2', 'm5', 'm10', 'm20'];
   $('#in-limit').innerHTML = limits.map((v) => {
@@ -174,7 +174,6 @@ function buildSelects() {
   }).join('');
 
   $('#in-msub').innerHTML = [2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<option value="${n}">÷${n} · ${t(`metro.subName${n}`)}</option>`).join('');
-  $('#in-mspan').innerHTML = [1, 2, 3, 4].map((n) => `<option value="${n}">${t('metro.spanN', { n })}</option>`).join('');
 
   const split = [`<option value="0">${t('settings.midiAuto')}</option>`];
   for (let m = 36; m <= 84; m++) split.push(`<option value="${m}">${noteName(m, false, S.noteNames)}</option>`);
@@ -226,9 +225,7 @@ function refreshControls(except) {
     el.hidden = String(getPath(path)) !== val;
   }
   renderBeatEditor();
-  for (const el of $$('[data-show-even-sub]')) el.hidden = S.metro.sub % 2 !== 0;
-  for (const el of $$('[data-needs-sub]')) el.classList.toggle('is-disabled', S.metro.mode !== 'sub');
-  const sigNow = SIG_ORDER.find((k) => S.metro.layers.custom.on && SIGS[k] === S.metro.pattern.join(''));
+  const sigNow = SIG_ORDER.find((k) => SIGS[k] === S.metro.pattern.join(''));
   for (const c of $$('#sig-presets .chip')) c.classList.toggle('is-on', c.dataset.sig === sigNow);
   renderPresets();
   const mt = $('#btn-metro');
@@ -279,6 +276,8 @@ function refreshTempo() {
   const cyc = cycleSeconds(S.tempoRef, bpm, S.left, S.right);
   $('#tempo-info').textContent = t('tempo.info', {
     cycle: cyc.toFixed(2),
+    L: S.left,
+    R: S.right,
     l: Math.round((S.left * 60) / cyc),
     r: Math.round((S.right * 60) / cyc),
   });
@@ -293,11 +292,14 @@ function rebuildRhythmUi() {
   $('#ratio-info').textContent = t('rhythm.info', { grid: g, comp: composite(L, R).length });
   $('#hud-ratio').innerHTML = `${ratioHtml(L, R)} <small style="font-size:13px;color:var(--text-3);font-family:var(--font-ui);font-weight:500;margin-left:6px">${againstText(L, R)}</small>`;
   lastSylIdx = -1;
+  $('#metro-explain').textContent = t('metro.explain', { l: numWord(L), r: numWord(R) });
+  const sd = [['both', `÷${L} + ÷${R}`], ['L', `÷${L}`], ['R', `÷${R}`], ['grid', `÷${g}`], ['n', '÷n']];
+  $('#subdiv-grid').innerHTML = sd.map(([v, big]) => `<button type="button" data-value="${v}" class="sd-${v}"><b>${big}</b><small>${t(`metro.sd.${v}`)}</small></button>`).join('');
 }
 
 const LEVEL_CYCLE = { A: 'N', N: 'S', S: 'M', M: 'A' };
 // Accent on each group's first beat (5/4 = 3+2, 7/8 = 2+2+3, compound meters in threes); every other beat at normal level.
-const SIGS = { '2/4': 'AN', '3/4': 'ANN', '4/4': 'ANNN', '5/4': 'ANNAN', '6/8': 'ANNANN', '7/8': 'ANANANN', '9/8': 'ANNANNANN', '12/8': 'ANNANNANNANN' };
+const SIGS = { '1/4': 'A', '2/4': 'AN', '3/4': 'ANN', '4/4': 'ANNN', '5/4': 'ANNAN', '6/8': 'ANNANN', '7/8': 'ANANANN', '9/8': 'ANNANNANN', '12/8': 'ANNANNANNANN' };
 const SIG_ORDER = Object.keys(SIGS);
 const TEMPO_TERMS = [[40, 'grave'], [60, 'largo'], [66, 'larghetto'], [76, 'adagio'], [108, 'andante'], [120, 'moderato'], [168, 'allegro'], [177, 'vivace'], [200, 'presto'], [Infinity, 'prestissimo']];
 const tempoTerm = (bpm) => t(`term.${TEMPO_TERMS.find(([lim]) => bpm < lim)[1]}`);
@@ -358,20 +360,9 @@ function drawPendulum(fr) {
   const playing = fr.playing && fr.pos >= 0;
   if (playing) {
     const k = Math.floor(fr.pos), phase = fr.pos - k;
-    const coarse = { ...S, metro: { ...M, on: true, mode: 'coarse' } };
-    let ticks = M.on ? transport.metroItems(k, transport.specAt(k), coarse).map((x) => x.phase) : [];
-    if (!ticks.length) ticks = [0];
-    let idx = 0;
-    for (let i = 0; i < ticks.length; i++) if (ticks[i] <= phase + 1e-9) idx = i;
-    const p0 = ticks[idx], p1 = idx + 1 < ticks.length ? ticks[idx + 1] : 1 + ticks[0];
-    const prog = clamp((phase - p0) / (p1 - p0), 0, 1);
-    const dir = (k * ticks.length + idx) % 2 ? 1 : -1;
-    angle = dir * 0.42 * Math.cos(Math.PI * prog);
-    flash = clamp(1 - ((phase - p0) * fr.dur) / 0.18, 0, 1);
-    if (M.on && M.layers.custom.on) {
-      const barPos = ((((k % M.span) + M.span) % M.span) + phase) / M.span;
-      beatText = `${Math.floor(barPos * M.beats) + 1} / ${M.beats}`;
-    } else beatText = `${idx + 1} / ${ticks.length}`;
+    angle = (k % 2 ? 1 : -1) * 0.42 * Math.cos(Math.PI * phase);
+    flash = clamp(1 - (phase * fr.dur) / 0.18, 0, 1);
+    beatText = `${(((k % M.beats) + M.beats) % M.beats) + 1} / ${M.beats}`;
   }
   const cx = w / 2, base = h - 6, top = 8;
   const body = ctx.createLinearGradient(0, top, 0, base);
@@ -436,13 +427,11 @@ let lastBeatNow = -1;
 function renderBeatEditor() {
   const M = S.metro;
   const ed = $('#beat-editor');
-  const subs = M.mode === 'sub' ? M.sub : 1;
-  const sig = `${M.beats}|${subs}|${M.pattern.join('')}|${getLang()}`;
+  const sig = `${M.beats}|${M.pattern.join('')}|${getLang()}`;
   if (ed.dataset.sig === sig) return;
   ed.dataset.sig = sig;
   ed.innerHTML = M.pattern.map((lv, i) => {
-    const dots = subs > 1 ? `<span class="subs">${'<i></i>'.repeat(subs - 1)}</span>` : '';
-    return `<button type="button" class="beat lvl-${lv}" data-beat="${i}" title="${t(`metro.lvl.${lv}`)}"><b>${i + 1}</b>${dots}</button>`;
+    return `<button type="button" class="beat lvl-${lv}" data-beat="${i}" title="${t(`metro.lvl.${lv}`)}"><b>${i + 1}</b></button>`;
   }).join('');
   lastBeatNow = -1;
 }
@@ -464,11 +453,7 @@ function applyMetroPreset(name) {
 function highlightBeat(fr) {
   const M = S.metro;
   let idx = -1;
-  if (fr.playing && fr.pos >= 0 && M.on && M.layers.custom.on) {
-    const k = Math.floor(fr.pos);
-    const barPos = ((k % M.span) + (fr.pos - k)) / M.span;
-    idx = Math.floor(barPos * M.beats);
-  }
+  if (fr.playing && fr.pos >= 0) idx = ((Math.floor(fr.pos) % M.beats) + M.beats) % M.beats;
   if (idx === lastBeatNow) return;
   lastBeatNow = idx;
   $$('#beat-editor .beat').forEach((b, i) => b.classList.toggle('is-now', i === idx));
@@ -508,10 +493,6 @@ function onSettingChange(path) {
       break;
     case 'noteNames':
       buildSelects();
-      break;
-    case 'metro.layers.grid.on':
-      // The subdivision grid only sounds in subdivided mode, so switch to it.
-      if (S.metro.layers.grid.on && S.metro.mode !== 'sub') { S.metro.mode = 'sub'; saveSettings(S); toast(t('metro.mode.sub')); }
       break;
     default:
   }
@@ -619,7 +600,6 @@ function bindControls() {
     if (!c) return;
     const pat = [...SIGS[c.dataset.sig]];
     S.metro.beats = pat.length;
-    S.metro.layers.custom.on = true;
     update('metro.pattern', pat);
   });
   $('#btn-preset-save').addEventListener('click', savePreset);
@@ -1507,6 +1487,12 @@ function computePressed(fr, nowMs) {
   }
 }
 
+/** "Bar 2 · beat 3" for beat k (one beat = one group). */
+function barBeat(k) {
+  const n = S.metro.beats;
+  return t('hud.barBeat', { bar: Math.floor(Math.max(0, k) / n) + 1, beat: (Math.max(0, k) % n) + 1 });
+}
+
 function updateHud(fr) {
   const k = Math.floor(fr.pos);
   // Composite syllable
@@ -1524,9 +1510,7 @@ function updateHud(fr) {
 
   // Count-in
   if (fr.playing && fr.pos < 0) {
-    const m = S.tempoRef === 'L' ? S.left : S.tempoRef === 'R' ? S.right : Math.max(S.left, S.right);
-    const total = transport.countIn * m;
-    const remaining = total - Math.floor((fr.pos + transport.countIn) * m);
+    const remaining = transport.countIn - Math.floor(fr.pos + transport.countIn);
     if (remaining !== lastCount && remaining > 0) {
       const cd = $('#countdown');
       cd.textContent = remaining;
@@ -1569,7 +1553,7 @@ function updateHud(fr) {
   // Text HUD
   const acc = scorer.accuracy;
   const sub = fr.playing
-    ? (fr.pos < 0 ? t('hud.countIn') : `${t('hud.cycle', { n: k + 1 })} · ${Math.round(transport.bpm)} ${t(`tempo.unit.${S.tempoRef}`)}`)
+    ? (fr.pos < 0 ? t('hud.countIn') : `${barBeat(k)} · ${Math.round(transport.bpm)} ${t(`tempo.unit.${S.tempoRef}`)}`)
     : `${modeName(S.playMode)} · ${displayedBpm()} ${t(`tempo.unit.${S.tempoRef}`)}`;
   const hud = `${sub}|${acc == null ? '—' : Math.round(acc * 100)}|${scorer.combo}`;
   if (hud !== lastHud) {
@@ -1620,7 +1604,7 @@ function render() {
   fr.handShort = { L: t('hand.leftShort'), R: t('hand.rightShort') };
   fr.compLabel = t('strip.composite');
   fr.scoreCaption = t('score.caption');
-  fr.cycleLabel = t('hud.cycle', { n: Math.floor(fr.pos) + 1 });
+  fr.cycleLabel = barBeat(Math.floor(fr.pos));
   fr.fingerWord = t('lamp.finger');
 
   computeActive(fr);

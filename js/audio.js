@@ -488,7 +488,8 @@ export class AudioEngine {
     const t = Math.max(time, this.ctx.currentTime);
     // Every beat must stay clearly audible; accents are louder, not the only thing you hear.
     const lv = level === 'accent' ? 1 : level === 'soft' ? 0.55 : 0.8;
-    const rate = { L: 0.84, R: 1.19, grid: 1.33 }[opts.layer] || 1;
+    // Subdivision clicks get their own pitch: left grouping lower, right grouping higher.
+    const rate = { L: 0.84, R: 1.19, grid: 1.33, n: 1.12 }[opts.layer] || 1;
     const buf = this.sample(METRO_SOUNDS, opts.sound || 'mech', level === 'accent');
     this.playSample(t, buf, Math.min(1.2, lv * Math.pow(vol, 1.2) * 1.1), rate, this.bus.C);
   }

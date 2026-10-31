@@ -138,14 +138,6 @@
             </div>
             <input type="range" id="in-bpm" min="5" max="300" step="1">
           </div>
-          <div class="field">
-            <span class="label" data-i18n="tempo.ref">Beat reference</span>
-            <div class="seg seg-fill" data-bind="tempoRef" role="radiogroup">
-              <button type="button" data-value="cycle" data-i18n="tempo.ref.cycle">Whole cycle</button>
-              <button type="button" data-value="L" data-i18n="tempo.ref.L">Left beat</button>
-              <button type="button" data-value="R" data-i18n="tempo.ref.R">Right beat</button>
-            </div>
-          </div>
           <p class="hint" id="tempo-info"></p>
           <p class="hint" data-i18n="tempo.customHint">Type any tempo from 5 to 300.</p>
         </div>
@@ -162,24 +154,25 @@
             </div>
           </div>
           <label class="switch-row"><span><span data-i18n="metro.enable">Metronome on</span><small class="hint" data-i18n="metro.enableHint">On by default · toolbar button or Shift + M</small></span><input type="checkbox" class="switch" data-bind="metro.on"></label>
+          <p class="hint metro-explain" id="metro-explain"></p>
           <div class="field">
             <span class="label" data-i18n="metro.mode">Mode</span>
             <div class="seg seg-fill" data-bind="metro.mode" role="radiogroup">
-              <button type="button" data-value="coarse" data-i18n="metro.mode.coarse">Main beats only</button>
+              <button type="button" data-value="coarse" data-i18n="metro.mode.coarse">Beats only</button>
               <button type="button" data-value="sub" data-i18n="metro.mode.sub">Subdivided</button>
             </div>
           </div>
           <div class="sub-fields" data-show-eq="metro.mode:sub">
-            <div class="field two">
-              <div><label class="label" for="in-msub" data-i18n="metro.sub">Subdivide each beat</label><select id="in-msub" data-bind="metro.sub" data-type="number"></select></div>
-              <div><div class="field-row"><label for="in-msubvol" data-i18n="metro.subVol">Subdivision volume</label><span class="value"><output data-out="metro.subVol"></output></span></div>
-                <input type="range" id="in-msubvol" data-bind="metro.subVol" data-fmt="pct" min="0" max="1" step="0.01"></div>
+            <span class="label" data-i18n="metro.subdiv">Split each beat into</span>
+            <div class="seg subdiv-grid" data-bind="metro.subdiv" role="radiogroup" id="subdiv-grid"></div>
+            <div class="field" data-show-eq="metro.subdiv:n">
+              <label class="label" for="in-msub" data-i18n="metro.subOther">Other division</label>
+              <select id="in-msub" data-bind="metro.sub" data-type="number"></select>
             </div>
-            <div class="field" data-show-even-sub>
-              <div class="field-row"><label for="in-mswing" data-i18n="metro.swing">Swing</label><span class="value"><output data-out="metro.swing"></output></span></div>
-              <input type="range" id="in-mswing" data-bind="metro.swing" data-fmt="pct100" min="0" max="100" step="1">
+            <div class="field">
+              <div class="field-row"><label for="in-msubvol" data-i18n="metro.subVol">Subdivision volume</label><span class="value"><output data-out="metro.subVol"></output></span></div>
+              <input type="range" id="in-msubvol" data-bind="metro.subVol" data-fmt="pct" min="0" max="1" step="0.01">
             </div>
-            <p class="hint" data-i18n="metro.subHint">Every main click below gets this many evenly spaced softer clicks.</p>
           </div>
           <div class="field two">
             <div>
@@ -201,57 +194,26 @@
             </div>
           </div>
           <div class="field">
-            <span class="label" data-i18n="metro.sig">Time signature (custom pattern)</span>
-            <div class="quick-row" id="sig-presets"><button type="button" class="chip" data-sig="2/4">2/4</button><button type="button" class="chip" data-sig="3/4">3/4</button><button type="button" class="chip" data-sig="4/4">4/4</button><button type="button" class="chip" data-sig="5/4">5/4</button><button type="button" class="chip" data-sig="6/8">6/8</button><button type="button" class="chip" data-sig="7/8">7/8</button><button type="button" class="chip" data-sig="9/8">9/8</button><button type="button" class="chip" data-sig="12/8">12/8</button></div>
+            <span class="label" data-i18n="metro.sig">Time signature of the piece</span>
+            <div class="quick-row" id="sig-presets"><button type="button" class="chip" data-sig="1/4">1/4</button><button type="button" class="chip" data-sig="2/4">2/4</button><button type="button" class="chip" data-sig="3/4">3/4</button><button type="button" class="chip" data-sig="4/4">4/4</button><button type="button" class="chip" data-sig="5/4">5/4</button><button type="button" class="chip" data-sig="6/8">6/8</button><button type="button" class="chip" data-sig="7/8">7/8</button><button type="button" class="chip" data-sig="9/8">9/8</button><button type="button" class="chip" data-sig="12/8">12/8</button></div>
           </div>
-          <div class="layers">
-            <span class="label" data-i18n="metro.layers">Layers — combine any of them</span>
-            <div class="layer-row" data-layer="down">
-              <input type="checkbox" class="switch" id="ml-down" data-bind="metro.layers.down.on">
-              <label for="ml-down"><span data-i18n="metro.l.down"></span><small data-i18n="metro.l.down.hint"></small></label>
-              <input type="range" class="layer-vol " data-bind="metro.layers.down.vol" min="0" max="1" step="0.01" data-i18n-aria="metro.layerVol">
-            </div>
-            <div class="layer-row" data-layer="L">
-              <input type="checkbox" class="switch" id="ml-L" data-bind="metro.layers.L.on">
-              <label for="ml-L"><span data-i18n="metro.l.L"></span><small data-i18n="metro.l.L.hint"></small></label>
-              <input type="range" class="layer-vol range-l" data-bind="metro.layers.L.vol" min="0" max="1" step="0.01" data-i18n-aria="metro.layerVol">
-            </div>
-            <div class="layer-row" data-layer="R">
-              <input type="checkbox" class="switch" id="ml-R" data-bind="metro.layers.R.on">
-              <label for="ml-R"><span data-i18n="metro.l.R"></span><small data-i18n="metro.l.R.hint"></small></label>
-              <input type="range" class="layer-vol range-r" data-bind="metro.layers.R.vol" min="0" max="1" step="0.01" data-i18n-aria="metro.layerVol">
-            </div>
-            <div class="layer-row" data-layer="grid" data-needs-sub>
-              <input type="checkbox" class="switch" id="ml-grid" data-bind="metro.layers.grid.on">
-              <label for="ml-grid"><span data-i18n="metro.l.grid"></span><small data-i18n="metro.l.grid.hint"></small></label>
-              <input type="range" class="layer-vol " data-bind="metro.layers.grid.vol" min="0" max="1" step="0.01" data-i18n-aria="metro.layerVol">
-            </div>
-            <div class="layer-row" data-layer="custom">
-              <input type="checkbox" class="switch" id="ml-custom" data-bind="metro.layers.custom.on">
-              <label for="ml-custom"><span data-i18n="metro.l.custom"></span><small data-i18n="metro.l.custom.hint"></small></label>
-              <input type="range" class="layer-vol " data-bind="metro.layers.custom.vol" min="0" max="1" step="0.01" data-i18n-aria="metro.layerVol">
-            </div>
+          <div class="field">
+            <div class="field-row"><label for="in-mbeats" data-i18n="metro.beats">Beats per bar</label></div>
+            <input type="number" id="in-mbeats" data-bind="metro.beats" min="1" max="16">
           </div>
-          <div class="sub-fields" data-show="metro.layers.custom.on">
-            <div class="field two">
-              <div><label class="label" for="in-mbeats" data-i18n="metro.beats">Beats</label><input type="number" id="in-mbeats" data-bind="metro.beats" min="1" max="16"></div>
-              <div><label class="label" for="in-mspan" data-i18n="metro.span">Spans</label><select id="in-mspan" data-bind="metro.span" data-type="number"></select></div>
-            </div>
-            <div class="beat-editor" id="beat-editor" role="group" data-i18n-aria="metro.editor"></div>
-            <div class="beat-legend">
-              <span><i class="lvl-A"></i><span data-i18n="metro.lvl.A">Accent</span></span>
-              <span><i class="lvl-N"></i><span data-i18n="metro.lvl.N">Normal</span></span>
-              <span><i class="lvl-S"></i><span data-i18n="metro.lvl.S">Soft</span></span>
-              <span><i class="lvl-M"></i><span data-i18n="metro.lvl.M">Mute</span></span>
-            </div>
-            <p class="hint" data-i18n="metro.editorHint">Tap a beat to change it: accent → normal → soft → mute.</p>
-            <div class="quick-row" id="metro-presets">
-              <button type="button" class="chip" data-mpreset="accent" data-i18n="metro.p.accent">Accent 1</button>
-              <button type="button" class="chip" data-mpreset="even" data-i18n="metro.p.even">All even</button>
-              <button type="button" class="chip" data-mpreset="alt" data-i18n="metro.p.alt">Strong–weak</button>
-              <button type="button" class="chip" data-mpreset="back" data-i18n="metro.p.back">Backbeat</button>
-              <button type="button" class="chip" data-mpreset="last" data-i18n="metro.p.last">Only the last beat</button>
-            </div>
+          <div class="beat-editor" id="beat-editor" role="group" data-i18n-aria="metro.editor"></div>
+          <div class="beat-legend">
+            <span><i class="lvl-A"></i><span data-i18n="metro.lvl.A">Accent</span></span>
+            <span><i class="lvl-N"></i><span data-i18n="metro.lvl.N">Normal</span></span>
+            <span><i class="lvl-S"></i><span data-i18n="metro.lvl.S">Soft</span></span>
+            <span><i class="lvl-M"></i><span data-i18n="metro.lvl.M">Mute</span></span>
+          </div>
+          <p class="hint" data-i18n="metro.editorHint">Tap a beat to change it: accent → normal → soft → mute.</p>
+          <div class="quick-row" id="metro-presets">
+            <button type="button" class="chip" data-mpreset="accent" data-i18n="metro.p.accent">Accent 1</button>
+            <button type="button" class="chip" data-mpreset="even" data-i18n="metro.p.even">All even</button>
+            <button type="button" class="chip" data-mpreset="alt" data-i18n="metro.p.alt">Strong–weak</button>
+            <button type="button" class="chip" data-mpreset="back" data-i18n="metro.p.back">Backbeat</button>
           </div>
           <div class="field">
             <div class="field-row"><label for="in-mrand" data-i18n="metro.randomMute">Randomly drop clicks</label><span class="value"><output data-out="metro.randomMute"></output></span></div>

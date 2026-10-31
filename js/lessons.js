@@ -35,7 +35,7 @@ for (const g of LESSON_GROUPS) {
         bpm: Math.max(10, Math.round(g.bpm * factor)),
         playMode: mode,
         lhPattern: lp, rhPattern: rp,
-        countIn: 1,
+        countIn: 2,
         strict: false,
         gap: { on: false, play: 3, mute: 1, ...(extra?.gap || {}) },
       },

@@ -70,7 +70,8 @@ export class NotationView {
     // Barlines
     ctx.strokeStyle = rgba(pal.text, 0.55);
     ctx.lineWidth = 1.2;
-    for (let b = 0; b <= 2; b++) {
+    // No barline right after the clefs: a system opens with the system line only.
+    for (let b = 1; b <= 2; b++) {
       const x = Math.round(x0 + b * barW) + 0.5;
       ctx.beginPath();
       ctx.moveTo(x, yTrebleTop);
@@ -83,15 +84,17 @@ export class NotationView {
     ctx.textBaseline = 'bottom';
     for (let b = 0; b < 2; b++) ctx.fillText(String(firstBar + b + 1), x0 + b * barW + 4, yTrebleTop - sp * 4.6);
 
-    // Clefs
+    // Clefs, fitted to the staff by their measured outline (standard engraving extents,
+    // in staff spaces above the bottom line): the treble clef runs from -1.63 to 5.39 so its
+    // curl wraps the G line; the bass clef runs from 0.46 to 4.04 so its dots straddle the F line.
     ctx.fillStyle = pal.text;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
     if (this.musicFontOk) {
-      ctx.font = `${sp * 4}px "Noto Music"`;
-      ctx.fillText('\u{1D11E}', left + sp * 1.9, yTrebleBot - sp);
-      ctx.fillText('\u{1D122}', left + sp * 1.9, yBassTop + sp);
+      const x = left + sp * 1.9;
+      this.clef(ctx, '\u{1D11E}', x, yTrebleBot - 5.39 * sp, yTrebleBot + 1.63 * sp);
+      this.clef(ctx, '\u{1D122}', x, yBassBot - 4.04 * sp, yBassBot - 0.46 * sp);
     } else {
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
       ctx.font = `700 ${sp * 2.4}px ${pal.fontDisplay}`;
       ctx.fillText('G', left + sp * 2.2, yTrebleBot - sp * 0.6);
       ctx.fillText('F', left + sp * 2.2, yBassTop + sp * 2.2);
@@ -134,6 +137,20 @@ export class NotationView {
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     ctx.fillText(fr.scoreCaption, w - right, h - 6);
+  }
+
+  /** Draw a clef glyph scaled and placed so its ink spans exactly yTop..yBottom. */
+  clef(ctx, glyph, x, yTop, yBottom) {
+    const REF = 200;
+    ctx.font = `${REF}px "Noto Music"`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(glyph);
+    const ink = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+    if (!(ink > 0)) return;
+    const k = (yBottom - yTop) / ink;
+    ctx.font = `${REF * k}px "Noto Music"`;
+    ctx.fillText(glyph, x + m.actualBoundingBoxLeft * k, yTop + m.actualBoundingBoxAscent * k);
   }
 
   brace(ctx, x, y0, y1, sp, color) {

@@ -187,12 +187,9 @@ export class Transport {
   }
 
   buildList(k, { L, R }, cfg) {
+    // Count-in beats click like the metronome (even when it is switched off).
+    if (k < 0) return this.metroItems(k, { L, R }, cfg, true);
     const items = [];
-    if (k < 0) {
-      const m = cfg.tempoRef === 'L' ? L : cfg.tempoRef === 'R' ? R : Math.max(L, R);
-      for (let i = 0; i < m; i++) items.push({ kind: 'count', phase: i / m, i, m });
-      return items;
-    }
     for (let i = 0; i < L; i++) items.push({ kind: 'note', hand: 'L', i, n: L, phase: i / L });
     for (let i = 0; i < R; i++) items.push({ kind: 'note', hand: 'R', i, n: R, phase: i / R });
     items.push(...this.metroItems(k, { L, R }, cfg));
@@ -202,48 +199,25 @@ export class Transport {
   }
 
   /**
-   * Metronome clicks for cycle k: every enabled layer, merged so that clicks
-   * landing on the same instant sound once at the strongest level.
+   * Metronome clicks for beat k. The metronome follows the piece: cycle k is beat k, so
+   * every beat holds one complete L:R group. The beat click takes its level from the
+   * bar's accent pattern; in subdivided mode the beat is also split into ÷L and/or ÷R
+   * (the duplet and triplet of 2 against 3), the common grid, or ÷n.
+   * Coinciding clicks are merged and sound once at the strongest level.
    */
-  metroItems(k, { L, R }, cfg = this.cfg) {
+  metroItems(k, { L, R }, cfg = this.cfg, countIn = false) {
     const M = cfg.metro;
-    if (!M.on || k < 0) return [];
-    const lay = M.layers;
-    const subOn = M.mode === 'sub';
-    const sub = subOn ? M.sub : 1;
-    const swingR = 0.5 + (M.swing / 100) * 0.25;
-    // Offset of subdivision s inside one beat (0..1), with swing on the off-beats of even subdivisions.
-    const subOff = (s) => (sub % 2 === 0 && s % 2 === 1 ? (s - 1 + swingR * 2) / sub : s / sub);
+    if (!M.on && !countIn) return [];
     const raw = [];
-    const add = (phase, level, vol, layer) => { if (level !== 'mute' && vol > 0) raw.push({ kind: 'metro', phase, level, vol, layer }); };
-    // A main click plus its subdivisions; `len` is the beat length in cycles.
-    const beat = (p0, len, level, vol, layer) => {
-      add(p0, level, vol, layer);
-      for (let s = 1; s < sub; s++) {
-        const p = p0 + subOff(s) * len;
-        if (p < 1 - 1e-9) add(p, 'soft', vol * M.subVol, layer);
-      }
+    const add = (phase, level, vol, layer) => {
+      if (level !== 'mute' && vol > 0) raw.push({ kind: 'metro', phase, level, vol, layer, count: countIn });
     };
-    if (lay.down.on) beat(0, 1, 'accent', lay.down.vol, 'down');
-    if (lay.L.on) for (let i = 0; i < L; i++) beat(i / L, 1 / L, i === 0 ? 'accent' : 'normal', lay.L.vol, 'L');
-    if (lay.R.on) for (let i = 0; i < R; i++) beat(i / R, 1 / R, i === 0 ? 'accent' : 'normal', lay.R.vol, 'R');
-    if (lay.grid.on && subOn) {
-      const g = lcm(L, R);
-      for (let j = 0; j < g; j++) add(j / g, j === 0 ? 'normal' : 'soft', lay.grid.vol, 'grid');
-    }
-    if (lay.custom.on) {
-      const inBar = mod(k, M.span);
-      const LV = { A: 'accent', N: 'normal', S: 'soft', M: 'mute' };
-      for (let b = 0; b < M.beats; b++) {
-        const lv = M.pattern[b] || 'N';
-        if (lv === 'M') continue;
-        for (let s = 0; s < sub; s++) {
-          const barPos = ((b + subOff(s)) / M.beats) * M.span;
-          if (Math.floor(barPos + 1e-9) !== inBar) continue;
-          const level = s === 0 ? LV[lv] : 'soft';
-          add(barPos - inBar, level, lay.custom.vol * (s === 0 ? 1 : M.subVol), 'custom');
-        }
-      }
+    const LV = { A: 'accent', N: 'normal', S: 'soft', M: 'mute' };
+    const beatLevel = countIn ? (k === -this.countIn ? 'accent' : 'normal') : LV[M.pattern[mod(k, M.beats)]] || 'normal';
+    add(0, beatLevel, 1, 'beat');
+    if (M.mode === 'sub') {
+      const divs = { both: [[L, 'L'], [R, 'R']], L: [[L, 'L']], R: [[R, 'R']], grid: [[lcm(L, R), 'grid']], n: [[M.sub, 'n']] }[M.subdiv] || [];
+      for (const [n, layer] of divs) for (let i = 1; i < n; i++) add(i / n, 'soft', M.subVol, layer);
     }
     const rank = { accent: 3, normal: 2, soft: 1 };
     const merged = new Map();
@@ -261,11 +235,11 @@ export class Transport {
   emit(item, pos, t) {
     const cfg = this.cfg;
     const k = Math.floor(pos + 1e-9);
-    if (item.kind === 'count') {
-      this.audio.click(t, item.i === 0 ? 'accent' : 'normal', Math.max(0.35, cfg.metroVol), { sound: cfg.metro.sound });
-      return;
-    }
     if (item.kind === 'metro') {
+      if (item.count) {
+        this.audio.click(t, item.level, Math.max(0.5, cfg.metroVol) * item.vol, { sound: cfg.metro.sound, layer: item.layer });
+        return;
+      }
       if (this.isGap(k) && !cfg.metro.gapKeep) return;
       if (cfg.metro.randomMute && item.phase > 0 && Math.random() * 100 < cfg.metro.randomMute) return;
       this.audio.click(t, item.level, cfg.metroVol * item.vol, { sound: cfg.metro.sound, layer: item.layer });

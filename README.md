@@ -4,24 +4,23 @@ A web app for practicing piano polyrhythms such as 2 against 3 and 3 against 4. 
 
 It is a plain static site (HTML, CSS and native JavaScript modules) with no build step. It deploys as-is to GitHub Pages and works offline once loaded. The interface is available in English and Traditional Chinese (Taiwan).
 
-Throughout the app, a *cycle* is one full repetition of the pattern — for example, 2 left-hand notes against 3 right-hand notes.
+Tempo works like any metronome: beats per minute, where every beat holds the complete pattern — for example, 2 left-hand notes against 3 right-hand notes inside each beat.
 
 ## Features
 
 **Rhythm and tempo**
 - Any combination of 1–12 notes per hand, with one-click presets and a swap-hands button
 - Tempo from 5 to 300 beats per minute: type it, drag the slider, nudge it with ↑ / ↓, or tap it in
-- A beat can be a whole cycle, a left-hand note or a right-hand note
-- Speed trainer: raises the tempo by a set step every few cycles, up to a target tempo, as long as your accuracy stays above a threshold you choose
-- Silent cycles: after a set number of cycles, the hands go quiet for a set number of cycles so you keep the rhythm on your own
-- Session length limits (in cycles or minutes)
+- Speed trainer: raises the tempo by a set step every few beats, up to a target tempo, as long as your accuracy stays above a threshold you choose
+- Silent beats: after a set number of beats, the hands go quiet for a set number of beats so you keep the rhythm on your own
+- Session length limits (in beats or minutes)
 
 **Hands**
 - One switch for Listen / Left / Both / Right, usable while the music is playing
 - While you practice, you only hear your own key presses (plus the metronome). Turn on Accompaniment to have the app play the other hand in Left or Right mode, or raise the guide volume to hear your own part
 - A light on each side of the stage shows each hand's timing in real time: green = on time, yellow = a little early or late, red = missed, extra or wrong key. The offset in milliseconds appears under the light, and the ring around it shows that hand's recent accuracy. For a hand the app is playing, the light shows the note and finger instead
 - Five-finger positions in all 12 keys, major or minor, with adjustable octaves
-- 20 fingering patterns: single finger, finger sequences, broken chords, double notes and chords, a finger change every cycle, random, and custom
+- 20 fingering patterns: single finger, finger sequences, broken chords, double notes and chords, a finger change every beat, random, and custom
 - Play on the computer keyboard (`A S D F G` / `H J K L ;`), tap the on-screen piano, or connect a MIDI keyboard. Checking for the exact key and finger is optional and off by default
 
 **Visuals**
@@ -37,14 +36,15 @@ Throughout the app, a *cycle* is one full repetition of the pattern — for exam
 - A timing meter that shows how early or late your recent notes were
 
 **Metronome** (on by default, can be switched off)
-- Two modes: main beats only, or subdivided (÷2 to ÷9, with swing for even subdivisions)
-- Freely combinable layers: downbeat, left-hand pulse, right-hand pulse, subdivision grid, custom pattern
-- Time-signature presets (2/4 to 12/8), per-beat accent / normal / soft / mute, and bars that can span up to four cycles (polymeter)
+- Follows the piece: one click per beat, and every beat holds the whole polyrhythm
+- Time signature sets the beats per bar (presets from 1/4 to 12/8, or any 1–16 beats), with per-beat accent / normal / soft / mute
+- Two modes: beats only, or subdivided — each beat split into the left hand's grouping and/or the right hand's (÷2 and ÷3 for 2 against 3), the common grid (÷6), or another division (÷2 to ÷9). Each grouping has its own pitch
+- The count-in clicks the same beats and subdivisions, even when the metronome is off
 - Eight synthesized sounds: mechanical (tick + bell), quartz, woodblock, claves, cowbell, side stick, digital beep, soft click. The mechanical, woodblock, claves, cowbell and side-stick sounds are modeled on the real instruments
 - A swinging pendulum with a beat counter, and Italian tempo terms (Andante, Allegro, …)
-- Randomly dropped clicks to test your inner pulse (the first click of each cycle is never dropped)
-- An option to keep clicking during silent cycles (on by default)
-- Vibration on beat 1 of each cycle (on phones that support it)
+- Randomly dropped subdivision clicks to test your inner pulse (the beat itself always clicks)
+- An option to keep clicking during silent beats (on by default)
+- Vibration on beat 1 of each bar (on phones that support it)
 
 **Ear cues** (off by default, can be switched on)
 - Left-hand notes tap in the left ear and right-hand notes in the right ear

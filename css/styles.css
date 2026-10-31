@@ -500,6 +500,14 @@ input[type="number"].num-inline { width: 56px; font-weight: 700; font-size: 14px
 .pr-beat { font-family: var(--font-display); font-size: 34px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .pr-term { font-size: 12.5px; color: var(--text-2); font-style: italic; }
 .layer-row.is-disabled { opacity: .45; }
+.metro-explain { padding: 8px 10px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); color: var(--text-2); }
+.seg.subdiv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
+.seg.subdiv-grid > button { flex-direction: column; gap: 1px; padding: 7px 6px; white-space: normal; }
+.seg.subdiv-grid > button b { font-family: var(--font-display); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.seg.subdiv-grid > button small { font-size: 11px; color: var(--text-3); }
+.seg.subdiv-grid > .sd-both { grid-column: 1 / -1; }
+.seg.subdiv-grid > .sd-L b { color: var(--lh); }
+.seg.subdiv-grid > .sd-R b { color: var(--rh); }
 #sig-presets .chip { font-family: var(--font-display); font-weight: 600; min-width: 46px; }
 .preset-save { display: flex; gap: 6px; }
 .preset-save input { flex: 1; }
