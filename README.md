@@ -119,3 +119,7 @@ js/views/*.js         Pulse, orbit, grid, falling notes, score, piano with hands
 ## Browser support
 
 Requires a current version of Chrome, Edge, Firefox or Safari. MIDI input needs Web MIDI: it works in Chrome, Edge and Opera, Firefox asks for permission per site, and Safari does not support it. On iPhone and iPad, turn off silent mode to hear sound.
+
+## License
+
+[MIT](LICENSE) © 2026 Yufei Cai (蔡于飛)
